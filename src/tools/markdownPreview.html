@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Markdown Preview</title>
+
+<!-- Markdown parser -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<!-- Code highlight -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+
+<!-- Export -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<style>
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --quote-left: #d1d9e0;
+  --muted: #6b7280;
+  --accent: #2563eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  height: 56px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand::before {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4'%2F%3E%3Cpath d='M9 18c-4.51 2-5-2-7-2'%2F%3E%3C%2Fsvg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+header button {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+header button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #f8fafc;
+}
+
+header button:active {
+  transform: translateY(1px);
+}
+
+header button.loading {
+  cursor: wait;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+header button.loading svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+header button.btn-secondary {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+
+header button.btn-secondary:hover {
+  background: #f3f4f6;
+  color: var(--text);
+}
+
+main {
+  height: calc(100vh - 56px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+section {
+  overflow: auto;
+  padding: 16px;
+}
+
+#editor {
+  border-right: 1px solid var(--border);
+}
+
+textarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  resize: none;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.6;
+  background: transparent;
+  color: var(--text);
+}
+
+#preview {
+  background: var(--panel);
+}
+
+/* Markdown style */
+#preview h1,
+#preview h2,
+#preview h3 {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+#preview p {
+  line-height: 1.7;
+}
+
+#preview pre {
+  background: #f6f8fa;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  line-height: 1.45;
+}
+
+#preview code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 85%;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+#preview blockquote {
+  margin: 16px 0;
+  padding-left: 12px;
+  border-left: 4px solid var(--quote-left);
+  color: var(--muted);
+}
+
+#preview table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#preview th,
+#preview td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+}
+/* ===== 列表排版（核心） ===== */
+
+#preview ul,
+#preview ol {
+  margin: 12px 0 12px 1.25em;
+  padding: 0;
+}
+
+#preview li {
+  line-height: 1.7;
+  margin: 6px 0;
+}
+
+/* 子列表与父条目拉开距离 */
+#preview li > ul,
+#preview li > ol {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+/* 防止列表内段落过紧 */
+#preview li p {
+  margin: 4px 0;
+}
+
+/* ===== Code 样式修复 ===== */
+
+/* 行内代码 */
+#preview :not(pre) > code {
+  background: #f3f4f6;
+  color: #1f2937;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+/* Fullscreen Mode Styles */
+body.fullscreen-mode header,
+body.fullscreen-mode #editor {
+  display: none !important;
+}
+
+body.fullscreen-mode main {
+  height: 100vh;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+body.fullscreen-mode #preview {
+  padding: 40px 10%;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  background: var(--panel);
+  border: none;
+  min-height: 100vh;
+}
+
+#exit-fullscreen-btn {
+  display: none;
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex; /* Hidden by default via CSS logic below */
+  align-items: center;
+  gap: 8px;
+}
+
+#exit-fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  transform: translateY(-2px);
+}
+
+/* Fullscreen button logic */
+  body:not(.fullscreen-mode) #exit-fullscreen-btn {
+    display: none;
+  }
+  
+  body.fullscreen-mode #exit-fullscreen-btn {
+    display: flex;
+  }
+  
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    header {
+      padding: 0 12px;
+      overflow-x: auto; /* Allow horizontal scroll if needed */
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    header::-webkit-scrollbar {
+      display: none; /* Hide scrollbar */
+    }
+
+    .brand {
+      display: none; /* Hide brand on mobile to save space */
+    }
+
+    .actions {
+      width: 100%;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    header button {
+      padding: 8px 10px;
+      font-size: 12px;
+      flex: 1; /* Distribute space evenly */
+      justify-content: center;
+    }
+    
+    /* Hide text on very small screens, show icon only if needed */
+    @media (max-width: 380px) {
+      header button span {
+        display: none;
+      }
+      header button {
+        padding: 8px;
+      }
+    }
+
+    main {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+
+    #editor {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    body.fullscreen-mode #preview {
+      border: none;
+      padding: 20px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">Markdown Preview</div>
+  <div class="actions">
+    <button onclick="copyHTML()" class="btn-secondary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      复制 HTML
+    </button>
+    <button onclick="toggleFullscreen()" class="btn-secondary" title="全屏预览">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+      全屏
+    </button>
+    <div class="divider"></div>
+    <button onclick="exportImage(this)" id="btn-img">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+      <span>保存图片</span>
+    </button>
+    <button onclick="exportPDF(this)" id="btn-pdf">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      <span>保存 PDF</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section id="editor">
+<textarea id="md">
+# Markdown Preview
+
+> 支持 **代码高亮**、图片、表格、引用等。
+
+## 示例代码
+
+```python
+def hello(name: str):
+    print(f"Hello {name}")
+
+hello("World")
+const sum = (a, b) => a + b;
+console.log(sum(1, 2));
+docker build -t markdown-preview .
+```
+
+# 
+| Feature    | Support |
+| ---------- | ------- |
+| Markdown   | ✅       |
+| Highlight  | ✅       |
+| Export PNG | ✅       |
+| Export PDF | ✅       |
+
+</textarea>
+</section>
+<section id="preview">
+
+</section> 
+</main> 
+<button id="exit-fullscreen-btn" onclick="toggleFullscreen()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
+  退出全屏 (ESC)
+</button>
+<script> 
+    const textarea = document.getElementById("md");
+    const preview = document.getElementById("preview");
+
+    function render() {
+      // Parse markdown
+      preview.innerHTML = marked.parse(textarea.value);
+      
+      // Highlight code blocks
+      preview.querySelectorAll("pre code").forEach(block => {
+        hljs.highlightElement(block);
+      });
+    }
+
+    textarea.addEventListener("input", render);
+    render();
+
+    /* Copy HTML */
+    async function copyHTML() {
+      try {
+        await navigator.clipboard.writeText(preview.innerHTML);
+        alert("HTML 已复制到剪贴板");
+      } catch (err) {
+        alert("复制失败: " + err);
+      }
+    }
+
+    /* Export image */ 
+    function exportImage(btn) { 
+        const originalText = btn.querySelector("span").innerText;
+        const originalIcon = btn.querySelector("svg").innerHTML;
+        
+        // Start loading
+        btn.classList.add("loading");
+        btn.querySelector("span").innerText = "生成中...";
+        btn.querySelector("svg").innerHTML = '<path d="M21 12a9 9 0 1 1-6.219-8.56" />'; // Loading icon part
+        
+        // Timeout to reset loading state (5s)
+        const timeoutId = setTimeout(() => {
+            resetBtn(btn, originalText, originalIcon);
+        }, 5000);
+
+        html2canvas(preview, { 
+            backgroundColor: "#ffffff", 
+            scale: 2,
+            useCORS: true,
+            windowHeight: preview.scrollHeight,
+            onclone: (clonedDoc) => {
+                const clonedPreview = clonedDoc.getElementById("preview");
+                clonedPreview.style.height = "auto";
+                clonedPreview.style.overflow = "visible";
+                clonedPreview.style.maxHeight = "none";
+            }
+        }).then(canvas => { 
+            clearTimeout(timeoutId); // Clear timeout on success
+            const a = document.createElement("a"); 
+            a.href = canvas.toDataURL("image/png"); 
+            a.download = "markdown.png"; 
+            a.click(); 
+            resetBtn(btn, originalText, originalIcon);
+        }).catch(err => {
+            clearTimeout(timeoutId);
+            console.error(err);
+            alert("生成图片失败");
+            resetBtn(btn, originalText, originalIcon);
+        }); 
+    } 
+    
+    /* Export PDF */ 
+    function exportPDF(btn) { 
+        const originalText = btn.querySelector("span").innerText;
+        const originalIcon = btn.querySelector("svg").innerHTML;
+
+        // Start loading
+        btn.classList.add("loading");
+        btn.querySelector("span").innerText = "生成中...";
+        btn.querySelector("svg").innerHTML = '<path d="M21 12a9 9 0 1 1-6.219-8.56" />'; // Loading icon part
+
+        // Timeout to reset loading state (5s)
+        const timeoutId = setTimeout(() => {
+            resetBtn(btn, originalText, originalIcon);
+        }, 5000);
+
+        const { jsPDF } = window.jspdf; 
+        html2canvas(preview, { 
+            scale: 2,
+            useCORS: true,
+            windowHeight: preview.scrollHeight,
+            onclone: (clonedDoc) => {
+                const clonedPreview = clonedDoc.getElementById("preview");
+                clonedPreview.style.height = "auto";
+                clonedPreview.style.overflow = "visible";
+                clonedPreview.style.maxHeight = "none";
+            }
+        }).then(canvas => { 
+            clearTimeout(timeoutId); // Clear timeout on success
+            const imgData = canvas.toDataURL("image/png"); 
+            
+            // Calculate PDF height based on image ratio
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            // Create PDF with custom height if image is longer than A4
+            // Or use 'p', 'mm', [width, height] for custom size
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: [imgWidth, Math.max(imgHeight, pageHeight)] 
+            });
+            
+            pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight); 
+            pdf.save("markdown.pdf"); 
+            resetBtn(btn, originalText, originalIcon);
+        }).catch(err => {
+            clearTimeout(timeoutId);
+            console.error(err);
+            alert("生成 PDF 失败");
+            resetBtn(btn, originalText, originalIcon);
+        }); 
+    } 
+
+    function resetBtn(btn, text, iconHTML) {
+        btn.classList.remove("loading");
+        btn.querySelector("span").innerText = text;
+        btn.querySelector("svg").innerHTML = iconHTML;
+    } 
+
+    /* Fullscreen Logic */
+    function toggleFullscreen() {
+      document.body.classList.toggle("fullscreen-mode");
+    }
+
+    // Listen for ESC key to exit fullscreen
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && document.body.classList.contains("fullscreen-mode")) {
+        toggleFullscreen();
+      }
+    }); 
+</script> 
+</body> 
+</html>
