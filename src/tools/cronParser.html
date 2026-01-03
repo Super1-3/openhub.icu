@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cron 表达式生成器 - OpenHub</title>
+    <meta name="description" content="在线 Cron 表达式生成与反解析工具。支持 秒、分、时、日、月、周、年 配置，实时预览最近运行时间。">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cronstrue for human readable description -->
+    <script src="https://unpkg.com/cronstrue@latest/dist/cronstrue-i18n.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .tab-btn.active {
+            background-color: #eff6ff;
+            color: #4f46e5;
+            border-bottom: 2px solid #4f46e5;
+        }
+        
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+        }
+        .radio-group label:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col md:h-screen md:overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 z-10 shrink-0">
+        <div class="px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <a href="../../index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <div class="w-7 h-7 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-md flex items-center justify-center text-white font-bold shadow-sm text-sm">
+                        O
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-gray-900">OpenHub<span class="text-indigo-600">.icu</span></span>
+                </a>
+                <span class="text-gray-300 mx-2">/</span>
+                <span class="text-gray-600 font-medium text-sm">Cron 表达式</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2 shrink-0 z-20 overflow-x-auto whitespace-nowrap">
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mr-2">常用模板:</span>
+        <button onclick="applyTemplate('0 * * * * ?')" class="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all">每分钟</button>
+        <button onclick="applyTemplate('0 0 * * * ?')" class="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all">每小时</button>
+        <button onclick="applyTemplate('0 0 0 * * ?')" class="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all">每天午夜</button>
+        <button onclick="applyTemplate('0 0 12 * * ?')" class="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all">每天中午</button>
+        <button onclick="applyTemplate('0 0 0 ? * MON')" class="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all">每周一</button>
+        <button onclick="applyTemplate('0 0 0 1 * ?')" class="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all">每月1号</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
+        
+        <!-- Left: Builder -->
+        <div class="flex-1 flex flex-col min-w-0 bg-white md:border-r border-gray-200">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200 overflow-x-auto shrink-0" id="tabs">
+                <button class="tab-btn active px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="second">秒</button>
+                <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="minute">分</button>
+                <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="hour">时</button>
+                <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="day">日</button>
+                <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="month">月</button>
+                <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="week">周</button>
+                <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="year">年</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="flex-1 p-6 md:overflow-y-auto" id="tabContent">
+                <!-- Dynamic Content will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Right: Preview -->
+        <div class="w-full md:w-96 shrink-0 bg-gray-50 border-t md:border-t-0 md:border-l border-gray-200 flex flex-col">
+            <div class="p-6 border-b border-gray-200 bg-white">
+                <h3 class="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Cron 表达式</h3>
+                <div class="relative">
+                    <input type="text" id="cronResult" class="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" placeholder="输入 Cron 表达式">
+                    <button onclick="copyCron()" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-600 transition-colors" title="复制">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    </button>
+                </div>
+                <div id="humanReadable" class="mt-3 text-sm text-gray-600 bg-indigo-50 p-3 rounded-md border border-indigo-100 hidden"></div>
+            </div>
+
+            <div class="flex-1 p-6 md:overflow-y-auto">
+                <h3 class="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    下次执行时间
+                </h3>
+                <ul id="nextRuns" class="space-y-3 text-sm">
+                    <!-- List items -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as cronParser from 'https://unpkg.com/cron-schedule@6.0.0/dist/cron-parser.js';
+
+        // State
+        const state = {
+            second: { type: 'every', value: [] },
+            minute: { type: 'every', value: [] },
+            hour: { type: 'every', value: [] },
+            day: { type: 'every', value: [] },
+            month: { type: 'every', value: [] },
+            week: { type: 'nop', value: [] }, // default ?
+            year: { type: 'empty', value: [] } // default empty
+        };
+
+        const tabs = ['second', 'minute', 'hour', 'day', 'month', 'week', 'year'];
+        let currentTab = 'second';
+
+        // Constants
+        const RANGES = {
+            second: { min: 0, max: 59 },
+            minute: { min: 0, max: 59 },
+            hour: { min: 0, max: 23 },
+            day: { min: 1, max: 31 },
+            month: { min: 1, max: 12 },
+            week: { min: 1, max: 7, names: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] },
+            year: { min: 2024, max: 2099 }
+        };
+
+        // DOM Elements
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContent = document.getElementById('tabContent');
+        const cronResult = document.getElementById('cronResult');
+        const nextRuns = document.getElementById('nextRuns');
+        const humanReadable = document.getElementById('humanReadable');
+
+        // Init
+        renderTabContent(currentTab);
+        updateCron();
+        setupTabs();
+        setupReverseParse();
+
+        function setupTabs() {
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => {
+                        b.classList.remove('active');
+                        b.classList.remove('text-indigo-600');
+                        b.classList.add('text-gray-500');
+                        b.style.borderBottom = 'none';
+                    });
+                    btn.classList.add('active');
+                    btn.classList.remove('text-gray-500');
+                    btn.style.borderBottom = '2px solid #4f46e5';
+                    
+                    currentTab = btn.dataset.tab;
+                    renderTabContent(currentTab);
+                });
+            });
+        }
+
+        function setupReverseParse() {
+            cronResult.addEventListener('input', (e) => {
+                const val = e.target.value.trim();
+                if (!val) return;
+                
+                // 尝试计算下次运行时间以验证有效性
+                calculateNextRuns(val);
+                
+                // 尝试反向解析并更新 UI
+                // 注意：这里不调用 updateCron，因为 updateCron 会覆盖用户的输入
+                // 我们只更新 state，当用户切换 tab 或修改配置时，state 才是准确的
+                tryParseCronToState(val);
+            });
+        }
+
+        function renderTabContent(tab) {
+            const config = state[tab];
+            const range = RANGES[tab];
+            
+            let html = `<div class="space-y-6 radio-group">`;
+
+            // Common Options
+            // 1. Every
+            if (tab !== 'year') {
+                 html += `
+                    <label>
+                        <input type="radio" name="${tab}-type" value="every" ${config.type === 'every' ? 'checked' : ''} class="accent-indigo-600 w-4 h-4">
+                        <span class="text-gray-700">每${getUnitName(tab)} 允许的通配符 [ * ]</span>
+                    </label>
+                `;
+            } else {
+                 html += `
+                    <label>
+                        <input type="radio" name="${tab}-type" value="empty" ${config.type === 'empty' ? 'checked' : ''} class="accent-indigo-600 w-4 h-4">
+                        <span class="text-gray-700">不指定 (留空)</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="${tab}-type" value="every" ${config.type === 'every' ? 'checked' : ''} class="accent-indigo-600 w-4 h-4">
+                        <span class="text-gray-700">每年 [ * ]</span>
+                    </label>
+                `;
+            }
+
+            // 2. Not Specify (?) - Only for Day and Week
+            if (tab === 'day' || tab === 'week') {
+                html += `
+                    <label>
+                        <input type="radio" name="${tab}-type" value="nop" ${config.type === 'nop' ? 'checked' : ''} class="accent-indigo-600 w-4 h-4">
+                        <span class="text-gray-700">不指定 [ ? ]</span>
+                    </label>
+                `;
+            }
+
+            // 3. Interval (Loop)
+            html += `
+                <label>
+                    <input type="radio" name="${tab}-type" value="interval" ${config.type === 'interval' ? 'checked' : ''} class="accent-indigo-600 w-4 h-4">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-gray-700">周期：从</span>
+                        <input type="number" min="${range.min}" max="${range.max}" value="${config.value[0] || range.min}" data-idx="0" class="interval-input w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500">
+                        <span class="text-gray-700">${getUnitName(tab)}开始，每</span>
+                        <input type="number" min="1" max="${range.max}" value="${config.value[1] || 1}" data-idx="1" class="interval-input w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500">
+                        <span class="text-gray-700">${getUnitName(tab)}执行一次</span>
+                    </div>
+                </label>
+            `;
+
+            // 4. Range
+            html += `
+                <label>
+                    <input type="radio" name="${tab}-type" value="range" ${config.type === 'range' ? 'checked' : ''} class="accent-indigo-600 w-4 h-4">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-gray-700">区间：从</span>
+                        <input type="number" min="${range.min}" max="${range.max}" value="${config.value[0] || range.min}" data-idx="0" class="range-input w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500">
+                        <span class="text-gray-700">到</span>
+                        <input type="number" min="${range.min}" max="${range.max}" value="${config.value[1] || range.min+1}" data-idx="1" class="range-input w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500">
+                        <span class="text-gray-700">${getUnitName(tab)}</span>
+                    </div>
+                </label>
+            `;
+
+            // 5. Specific
+            html += `
+                <div class="block">
+                    <label class="mb-2">
+                        <input type="radio" name="${tab}-type" value="specific" ${config.type === 'specific' ? 'checked' : ''} class="accent-indigo-600 w-4 h-4">
+                        <span class="text-gray-700">指定${getUnitName(tab)}</span>
+                    </label>
+                    <div class="pl-6 checkbox-grid">
+                        ${generateCheckboxes(tab, range)}
+                    </div>
+                </div>
+            `;
+            
+            // Special for Day (Last day of month, etc) can be added here if needed
+
+            html += `</div>`;
+            tabContent.innerHTML = html;
+
+            bindEvents(tab);
+        }
+
+        function generateCheckboxes(tab, range) {
+            let html = '';
+            for (let i = range.min; i <= range.max; i++) {
+                const label = range.names ? range.names[i - 1] : i.toString().padStart(2, '0');
+                const isChecked = state[tab].type === 'specific' && state[tab].value.includes(i);
+                html += `
+                    <label class="inline-flex items-center gap-1.5 p-1 rounded hover:bg-gray-100 cursor-pointer text-sm">
+                        <input type="checkbox" value="${i}" ${isChecked ? 'checked' : ''} class="specific-checkbox accent-indigo-600 rounded text-indigo-600 w-4 h-4">
+                        <span class="text-gray-600">${label}</span>
+                    </label>
+                `;
+            }
+            return html;
+        }
+
+        function getUnitName(tab) {
+            const map = {
+                second: '秒', minute: '分', hour: '时', day: '日', month: '月', week: '周', year: '年'
+            };
+            return map[tab];
+        }
+
+        function bindEvents(tab) {
+            // Radio change
+            const radios = document.querySelectorAll(`input[name="${tab}-type"]`);
+            radios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    state[tab].type = e.target.value;
+                    
+                    // Logic for day/week conflict
+                    if (tab === 'day' && state[tab].type !== 'nop') {
+                        state['week'].type = 'nop';
+                    }
+                    if (tab === 'week' && state[tab].type !== 'nop') {
+                        state['day'].type = 'nop';
+                    }
+
+                    updateCron();
+                    // Re-render if conflict changed other tab state
+                    if (tab === 'day' || tab === 'week') {
+                        // Optionally re-render but might be annoying, just update cron is enough usually
+                    }
+                });
+            });
+
+            // Inputs
+            const intervalInputs = document.querySelectorAll('.interval-input');
+            intervalInputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.idx);
+                    const radio = e.target.closest('label').querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    state[tab].type = 'interval';
+                    if (!state[tab].value || state[tab].value.length < 2) state[tab].value = [0, 0];
+                    state[tab].value[idx] = parseInt(e.target.value);
+                    updateCron();
+                });
+            });
+
+            const rangeInputs = document.querySelectorAll('.range-input');
+            rangeInputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.idx);
+                    const radio = e.target.closest('label').querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    state[tab].type = 'range';
+                    if (!state[tab].value || state[tab].value.length < 2) state[tab].value = [0, 0];
+                    state[tab].value[idx] = parseInt(e.target.value);
+                    updateCron();
+                });
+            });
+
+            // Checkboxes
+            const checkboxes = document.querySelectorAll('.specific-checkbox');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const radio = cb.closest('.block').querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    state[tab].type = 'specific';
+                    
+                    const checked = Array.from(document.querySelectorAll('.specific-checkbox:checked')).map(c => parseInt(c.value));
+                    state[tab].value = checked;
+                    updateCron();
+                });
+            });
+        }
+
+        function updateCron() {
+            // Generate cron string from state
+            const cronParts = [];
+            
+            tabs.forEach(tab => {
+                const config = state[tab];
+                let part = '*';
+
+                switch (config.type) {
+                    case 'every':
+                        part = '*';
+                        break;
+                    case 'nop':
+                        part = '?';
+                        break;
+                    case 'empty':
+                        part = '';
+                        break;
+                    case 'interval':
+                        const start = config.value[0] || RANGES[tab].min;
+                        const step = config.value[1] || 1;
+                        part = `${start}/${step}`;
+                        break;
+                    case 'range':
+                        const min = config.value[0] || RANGES[tab].min;
+                        const max = config.value[1] || RANGES[tab].max;
+                        part = `${min}-${max}`;
+                        break;
+                    case 'specific':
+                        part = config.value.length > 0 ? config.value.sort((a,b)=>a-b).join(',') : '*';
+                        break;
+                }
+                cronParts.push(part);
+            });
+
+            // Handle year empty
+            if (cronParts[6] === '') cronParts.pop();
+
+            const cronString = cronParts.join(' ');
+            cronResult.value = cronString;
+            
+            calculateNextRuns(cronString);
+        }
+
+        function calculateNextRuns(cron) {
+            try {
+                // Use cronstrue
+                try {
+                    const desc = cronstrue.toString(cron, { locale: "zh_CN", use24HourTimeFormat: true });
+                    humanReadable.textContent = desc;
+                    humanReadable.classList.remove('hidden');
+                } catch (e) {
+                    humanReadable.classList.add('hidden');
+                }
+
+                
+                // Let's try to sanitize for cron-schedule if it fails
+                let parseableCron = cron;
+                // If it contains '?', replace with '*' for calculation if the parser complains
+                // Actually, let's try strict first.
+                
+                let cronExpr;
+                try {
+                    cronExpr = cronParser.parseCronExpression(cron);
+                } catch(e) {
+                    if (e.message.includes('?') || e.message.includes('NaN')) {
+                        // Fallback: Try replacing ? with *
+                        cronExpr = cronParser.parseCronExpression(cron.replace(/\?/g, '*'));
+                    } else {
+                        throw e;
+                    }
+                }
+                
+                const nextDates = cronExpr.getNextDates(5);
+                let html = '';
+                
+                nextDates.forEach((date, i) => {
+                    html += `
+                        <li class="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+                            <span class="text-indigo-600 font-mono font-bold text-xs bg-indigo-50 px-2 py-1 rounded">#${i+1}</span>
+                            <div class="flex flex-col">
+                                <span class="text-gray-900 font-medium">${formatDate(date)}</span>
+                                <span class="text-xs text-gray-400">星期${['日','一','二','三','四','五','六'][date.getDay()]}</span>
+                            </div>
+                        </li>
+                    `;
+                });
+                nextRuns.innerHTML = html;
+            } catch (err) {
+                nextRuns.innerHTML = `<li class="text-red-500 text-sm p-2 bg-red-50 rounded">表达式无效: ${err.message}</li>`;
+                humanReadable.classList.add('hidden');
+            }
+        }
+
+        function formatDate(date) {
+            return date.getFullYear() + '-' +
+                String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                String(date.getDate()).padStart(2, '0') + ' ' +
+                String(date.getHours()).padStart(2, '0') + ':' +
+                String(date.getMinutes()).padStart(2, '0') + ':' +
+                String(date.getSeconds()).padStart(2, '0');
+        }
+
+        function tryParseCronToState(cronStr) {
+            const parts = cronStr.trim().split(/\s+/);
+            if (parts.length < 5) return; 
+
+            // Helper to parse part
+            const parsePart = (part, tab) => {
+                if (!part) return { type: 'every', value: [] };
+                if (part === '*') return { type: 'every', value: [] };
+                if (part === '?') return { type: 'nop', value: [] };
+                if (part.includes('/')) {
+                    const [s, i] = part.split('/');
+                    return { type: 'interval', value: [parseInt(s === '*' ? RANGES[tab].min : s), parseInt(i)] };
+                }
+                if (part.includes('-')) {
+                    const [s, e] = part.split('-');
+                    return { type: 'range', value: [parseInt(s), parseInt(e)] };
+                }
+                if (part.includes(',') || (!isNaN(part) && part !== '')) {
+                    return { type: 'specific', value: part.split(',').map(n => parseInt(n)) };
+                }
+                return { type: 'every', value: [] }; // Fallback
+            };
+
+            let p = [...parts];
+            if (p.length === 5) {
+                // Linux: Min Hour Day Month Week -> Prepend Sec=0
+                state.second = { type: 'specific', value: [0] };
+                state.minute = parsePart(p[0], 'minute');
+                state.hour = parsePart(p[1], 'hour');
+                state.day = parsePart(p[2], 'day');
+                state.month = parsePart(p[3], 'month');
+                state.week = parsePart(p[4], 'week');
+                state.year = { type: 'empty', value: [] };
+            } else {
+                // Assume 6+ parts: Sec Min Hour Day Month Week Year?
+                state.second = parsePart(p[0], 'second');
+                state.minute = parsePart(p[1], 'minute');
+                state.hour = parsePart(p[2], 'hour');
+                state.day = parsePart(p[3], 'day');
+                state.month = parsePart(p[4], 'month');
+                state.week = parsePart(p[5], 'week');
+                if (p[6]) state.year = parsePart(p[6], 'year');
+                else state.year = { type: 'empty', value: [] };
+            }
+
+            renderTabContent(currentTab);
+        }
+
+        function applyTemplate(template) {
+            tryParseCronToState(template);
+            updateCron();
+        }
+
+        function copyCron() {
+            cronResult.select();
+            document.execCommand('copy');
+            // Visual feedback
+            const btn = cronResult.nextElementSibling;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            setTimeout(() => btn.innerHTML = originalHTML, 2000);
+        }
+        Object.assign(window, { applyTemplate, copyCron });
+    </script>
+</body>
+</html>
