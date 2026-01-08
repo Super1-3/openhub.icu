@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Markdown Preview</title>
+<title>Markdown 实时预览与导出工具 - OpenHub</title>
+<meta name="description" content="一款简洁强大的在线 Markdown 编辑器与预览工具。支持实时渲染、代码高亮、表格与公式。特色功能：支持一键将 Markdown 内容导出为高清长图 (PNG) 或 PDF 文档，完全免费。">
+<meta name="keywords" content="Markdown预览, Markdown编辑器, Markdown转PDF, Markdown转图片, 在线Markdown工具, 代码高亮, OpenHub">
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 
 <!-- Markdown parser -->
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
@@ -593,7 +596,7 @@ docker build -t markdown-preview .
             }
         }).then(canvas => { 
             clearTimeout(timeoutId); // Clear timeout on success
-            const imgData = canvas.toDataURL("image/png"); 
+            const imgData = canvas.toDataURL("image/jpeg"); 
             
             // Calculate PDF height based on image ratio
             const imgWidth = 210; // A4 width in mm
@@ -608,7 +611,7 @@ docker build -t markdown-preview .
                 format: [imgWidth, Math.max(imgHeight, pageHeight)] 
             });
             
-            pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight); 
+            pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, imgHeight); 
             pdf.save("markdown.pdf"); 
             resetBtn(btn, originalText, originalIcon);
         }).catch(err => {
