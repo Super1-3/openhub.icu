@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,230 +8,466 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        
-        /* Custom Animations */
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
-        .animate-fade-in-up {
-            animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0; /* Start hidden */
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
-        
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
 
-        /* Grid Pattern Background */
-        .bg-grid-pattern {
-            background-size: 40px 40px;
-            background-image: linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+        /* Glass Effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
-        
-        /* Glass Card Hover Effect */
+
         .tool-card {
-            transition: all 0.3s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .tool-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
-        }
-        
-        /* Gradient Text */
-        .text-gradient {
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px rgba(79, 70, 229, 0.15);
+            border-color: #818cf8;
         }
     </style>
 </head>
-<body class="bg-white text-gray-900 antialiased relative overflow-x-hidden min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
 
     <!-- Background Decoration -->
-    <div class="fixed inset-0 z-0 pointer-events-none">
-        <div class="absolute inset-0 bg-grid-pattern [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)]"></div>
-        <!-- Gradient Blobs -->
-        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-        <div class="absolute top-[-10%] right-[-10%] w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-200/20 rounded-[100%] blur-3xl mix-blend-multiply"></div>
+        <div class="absolute top-[-100px] right-0 w-[800px] h-[600px] bg-purple-200/20 rounded-[100%] blur-3xl mix-blend-multiply"></div>
     </div>
 
     <!-- Header -->
-    <header class="relative z-50 w-full border-b border-gray-100 bg-white/70 backdrop-blur-md sticky top-0">
+    <header class="fixed w-full z-50 glass border-b border-slate-200/60">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md">
-                    O
-                </div>
-                <span class="font-bold text-xl tracking-tight text-gray-900">OpenHub<span class="text-indigo-600">.icu</span></span>
+            <div class="flex items-center gap-3">
+                <a href="/" class="flex items-center gap-2 group">
+                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md group-hover:shadow-lg transition-shadow">
+                        O
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-slate-800">OpenHub<span class="text-indigo-600">.icu</span></span>
+                </a>
             </div>
-            <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-                <a href="#" class="hover:text-indigo-600 transition-colors">工具箱</a>
-                <a href="#" class="hover:text-indigo-600 transition-colors">开源周刊</a>
-                <a href="#" class="hover:text-indigo-600 transition-colors">关于我们</a>
-            </nav>
+            
+            <!-- Quick Search (Cmd+K style) -->
+            <div class="hidden md:flex flex-1 max-w-md mx-8">
+                <div class="relative w-full group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="global-search" 
+                           class="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl leading-5 bg-slate-50/50 text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm transition-all shadow-sm"
+                           placeholder="搜索工具 (e.g. JSON, 图片)...">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <span class="text-slate-400 text-xs border border-slate-200 rounded px-1.5 py-0.5">/</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex items-center gap-4">
-                <a href="https://github.com/tomy128/openhub.icu" target="_blank" class="text-gray-400 hover:text-gray-900 transition-colors">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
-                    </svg>
+                <a href="https://github.com/tomy128/openhub.icu" target="_blank" class="text-slate-400 hover:text-slate-900 transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" /></svg>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-grow relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+    <!-- Main Layout -->
+    <div class="pt-24 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-grow flex gap-8 relative z-10">
         
-        <!-- Hero Section -->
-        <div class="text-center max-w-3xl mx-auto mb-20">
-            <div class="animate-fade-in-up inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-semibold mb-6">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                </span>
-                OpenHub 2.0 即将到来
+        <!-- Sidebar Navigation (Sticky) -->
+        <aside class="hidden lg:block w-64 flex-shrink-0">
+            <div class="sticky top-24 space-y-8">
+                <div>
+                    <h3 class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                        分类
+                    </h3>
+                    <nav class="space-y-1" id="category-nav">
+                        <a href="#all" class="category-link active group flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-indigo-50 text-indigo-700" data-category="all">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500 mr-3"></span>
+                            全部工具
+                        </a>
+                        <a href="#dev" class="category-link group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors" data-category="dev">
+                            <span class="w-2 h-2 rounded-full bg-blue-400 mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            开发 & 代码
+                        </a>
+                        <a href="#media" class="category-link group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors" data-category="media">
+                            <span class="w-2 h-2 rounded-full bg-pink-400 mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            图片 & 媒体
+                        </a>
+                        <a href="#encode" class="category-link group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors" data-category="encode">
+                            <span class="w-2 h-2 rounded-full bg-green-400 mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            编解码
+                        </a>
+                        <a href="#ops" class="category-link group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors" data-category="ops">
+                            <span class="w-2 h-2 rounded-full bg-orange-400 mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            运维 & 网络
+                        </a>
+                    </nav>
+                </div>
             </div>
-            
-            <h1 class="animate-fade-in-up delay-100 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 mb-6">
-                打造极致的 <br class="hidden sm:block" />
-                <span class="text-gradient">开发者效率工具箱</span>
-            </h1>
-            
-            <p class="animate-fade-in-up delay-200 text-lg sm:text-xl text-gray-600 mb-10 leading-relaxed">
-                汇集轻量、高效、优雅的开发辅助工具。
-                <br />
-                从 Markdown 预览到代码转换，让创造更纯粹。
-            </p>
-            
-            <div class="animate-fade-in-up delay-300 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="#tools" class="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all transform hover:-translate-y-0.5">
-                    浏览工具库
-                </a>
-                <a href="#" class="w-full sm:w-auto px-8 py-3.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all">
-                    订阅周刊
-                </a>
-            </div>
-        </div>
+        </aside>
 
-        <!-- Tools Grid -->
-        <div id="tools" class="animate-fade-in-up delay-300">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">热门工具</h2>
-                <span class="text-sm text-gray-500">更多工具开发中...</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <main class="flex-1 min-w-0">
+            
+            <!-- Hero Section (Compact) -->
+            <div class="mb-10 text-center lg:text-left">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+                    打造极致的<span class="text-indigo-600">效率工具箱</span>
+                </h1>
+                <p class="text-lg text-slate-600 max-w-2xl">
+                    汇集轻量、高效、优雅的开发辅助工具。从 Markdown 预览到代码转换，让创造更纯粹。
+                </p>
                 
-                <!-- Markdown Preview Card -->
-                <a href="./src/tools/markdownPreview.html" class="tool-card group block p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 relative overflow-hidden">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
+                <!-- Mobile Category Dropdown (Custom UI) -->
+                <div class="mt-8 lg:hidden relative z-30">
+                    <button id="mobile-category-btn" class="w-full flex items-center justify-between bg-white border border-slate-200 text-slate-700 py-3.5 px-5 rounded-xl shadow-sm hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all active:scale-[0.99]">
+                        <span id="mobile-category-label" class="flex items-center gap-3 font-medium text-base">
+                            <span class="text-xl">📂</span> 全部工具
+                        </span>
+                        <svg class="w-5 h-5 text-slate-400 transition-transform duration-200" id="mobile-category-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="mobile-category-menu" class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden origin-top transition-all duration-200 transform z-40">
+                        <div class="py-1 max-h-64 overflow-y-auto">
+                            <button class="mobile-option w-full text-left px-5 py-3.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-3 transition-colors text-base border-b border-slate-50 last:border-0" data-value="all">
+                                <span class="text-xl">📂</span> 全部工具
+                            </button>
+                            <button class="mobile-option w-full text-left px-5 py-3.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-3 transition-colors text-base border-b border-slate-50 last:border-0" data-value="dev">
+                                <span class="text-xl">💻</span> 开发 & 代码
+                            </button>
+                            <button class="mobile-option w-full text-left px-5 py-3.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-3 transition-colors text-base border-b border-slate-50 last:border-0" data-value="media">
+                                <span class="text-xl">🖼️</span> 图片 & 媒体
+                            </button>
+                            <button class="mobile-option w-full text-left px-5 py-3.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-3 transition-colors text-base border-b border-slate-50 last:border-0" data-value="encode">
+                                <span class="text-xl">🔐</span> 编解码
+                            </button>
+                            <button class="mobile-option w-full text-left px-5 py-3.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-3 transition-colors text-base border-b border-slate-50 last:border-0" data-value="ops">
+                                <span class="text-xl">🚀</span> 运维 & 网络
+                            </button>
                         </div>
-                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">New</span>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">Markdown 实时预览</h3>
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        支持实时渲染、代码高亮、表格支持。提供一键导出为长图 (PNG) 或 PDF 文档功能。
-                    </p>
-                </a>
+                </div>
+            </div>
 
-                <!-- Coming Soon Cards -->
-                <a href="./src/tools/jsonFormatter.html" class="tool-card group block p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 relative overflow-hidden">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                            </svg>
-                        </div>
-                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">New</span>
+            <!-- Tools Grid Sections -->
+            <div id="tools-container" class="space-y-12">
+                
+                <!-- Section: Dev -->
+                <section id="section-dev" class="tool-section" data-category="dev">
+                    <div class="flex items-center gap-3 mb-4 pb-2 border-b border-slate-200/60">
+                        <span class="text-lg font-bold text-slate-800">开发 & 代码</span>
+                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">3</span>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">JSON 极速格式化</h3>
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        极速 JSON 格式化、验证与压缩。支持大文件处理、单双引号兼容、层级折叠与中文/Unicode 互转。
-                    </p>
-                </a>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <!-- Markdown -->
+                        <a href="./src/tools/markdownPreview.html" class="tool-card group bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 relative flex flex-col h-full">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wide rounded-md">Hot</span>
+                            </div>
+                            <h3 class="font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">Markdown 预览</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed">实时渲染、代码高亮，支持导出 PNG 长图或 PDF。</p>
+                        </a>
 
-                <a href="./src/tools/regexTester.html" class="tool-card group block p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 relative overflow-hidden">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
-                            </svg>
-                        </div>
-                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">New</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">正则测试实验室</h3>
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        可视化正则表达式匹配与调试。内置常用正则模板，支持实时匹配预览与捕获组分析。
-                    </p>
-                </a>
+                        <!-- JSON -->
+                        <a href="./src/tools/jsonFormatter.html" class="tool-card group bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 relative flex flex-col h-full">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">JSON 格式化</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed">极速格式化、验证与压缩，支持中文/Unicode 互转。</p>
+                        </a>
 
-                <a href="./src/tools/imageCompressor.html" class="tool-card group block p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 relative overflow-hidden">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">New</span>
+                        <!-- Regex -->
+                        <a href="./src/tools/regexTester.html" class="tool-card group bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 relative flex flex-col h-full">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-slate-900 mb-1 group-hover:text-teal-600 transition-colors">正则测试</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed">可视化正则匹配与调试，内置常用模板。</p>
+                        </a>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">图片极速压缩</h3>
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        浏览器本地极速压缩。无上传隐私风险，支持 WebP 转换。
-                    </p>
-                </a>
+                </section>
 
-                <a href="./src/tools/cronParser.html" class="group p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600 group-hover:scale-110 transition-transform duration-300">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">New</span>
+                <!-- Section: Media -->
+                <section id="section-media" class="tool-section" data-category="media">
+                    <div class="flex items-center gap-3 mb-4 pb-2 border-b border-slate-200/60">
+                        <span class="text-lg font-bold text-slate-800">图片 & 媒体</span>
+                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">1</span>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">Cron 表达式</h3>
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        直观的 Cron 表达式生成与反解析。支持 5/6 位格式，下次执行时间预览。
-                    </p>
-                </a>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <!-- Image Compressor -->
+                        <a href="./src/tools/imageCompressor.html" class="tool-card group bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 relative flex flex-col h-full">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-slate-900 mb-1 group-hover:text-pink-600 transition-colors">图片压缩</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed">本地极速压缩，无隐私风险，支持 WebP。</p>
+                        </a>
+                    </div>
+                </section>
 
-                <!-- Suggest Card -->
-                <a href="https://github.com/tomy128/openhub.icu/issues/new" target="_blank" class="group p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 border-dashed flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-sm transition-all">
-                    <div class="w-12 h-12 mb-3 rounded-full bg-white flex items-center justify-center shadow-sm text-indigo-500">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <!-- Section: Encode -->
+                <section id="section-encode" class="tool-section" data-category="encode">
+                    <div class="flex items-center gap-3 mb-4 pb-2 border-b border-slate-200/60">
+                        <span class="text-lg font-bold text-slate-800">编解码</span>
+                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">1</span>
                     </div>
-                    <h3 class="text-base font-bold text-gray-900 mb-1">建议更多工具</h3>
-                    <p class="text-xs text-gray-500">告诉我们需要什么</p>
-                </a>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <!-- Encoding -->
+                        <a href="./src/tools/encodingTools.html" class="tool-card group bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 relative flex flex-col h-full">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-slate-900 mb-1 group-hover:text-green-600 transition-colors">编解码工具箱</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed">Base64、URL、Unicode 转换，支持图片 Base64。</p>
+                        </a>
+                    </div>
+                </section>
+
+                <!-- Section: Ops -->
+                <section id="section-ops" class="tool-section" data-category="ops">
+                    <div class="flex items-center gap-3 mb-4 pb-2 border-b border-slate-200/60">
+                        <span class="text-lg font-bold text-slate-800">运维 & 网络</span>
+                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">1</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <!-- Cron -->
+                        <a href="./src/tools/cronGenerator.html" class="tool-card group bg-white p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 relative flex flex-col h-full">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-slate-900 mb-1 group-hover:text-orange-600 transition-colors">Cron 表达式</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed">Cron 表达式生成与反解析，执行时间预览。</p>
+                        </a>
+                    </div>
+                </section>
+
+                <!-- Coming Soon -->
+                <div class="p-8 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+                    <p class="text-slate-500 font-medium mb-2">更多工具正在路上...</p>
+                    <a href="https://github.com/tomy128/openhub.icu/issues/new" target="_blank" class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1">
+                        提交需求建议 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                </div>
 
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-100 bg-white/50 backdrop-blur-sm mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer class="border-t border-slate-200 bg-white/50 backdrop-blur-sm mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-gray-900">OpenHub.icu</span>
-                <span class="text-sm text-gray-400">© 2025</span>
+                <span class="text-sm font-semibold text-slate-700">OpenHub.icu</span>
+                <span class="text-sm text-slate-400">© 2025</span>
             </div>
-            <div class="flex gap-6 text-sm text-gray-500">
+            <div class="flex gap-6 text-sm text-slate-500">
                 <a href="#" class="hover:text-indigo-600 transition-colors">Privacy</a>
                 <a href="#" class="hover:text-indigo-600 transition-colors">Terms</a>
-                <a href="#" class="hover:text-indigo-600 transition-colors">GitHub</a>
             </div>
         </div>
     </footer>
 
+    <!-- Interactive Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('global-search');
+            const categoryLinks = document.querySelectorAll('.category-link');
+            const mobileSelect = document.getElementById('mobile-category-select');
+            const sections = document.querySelectorAll('.tool-section');
+            const toolCards = document.querySelectorAll('.tool-card');
+
+            // Category Filtering Logic
+            function filterCategory(category) {
+                // Update Sidebar UI
+                categoryLinks.forEach(link => {
+                    if (link.dataset.category === category) {
+                        link.classList.add('bg-indigo-50', 'text-indigo-700');
+                        link.classList.remove('text-slate-700', 'hover:bg-slate-100');
+                    } else {
+                        link.classList.remove('bg-indigo-50', 'text-indigo-700');
+                        link.classList.add('text-slate-700', 'hover:bg-slate-100');
+                    }
+                });
+
+                // Show/Hide Sections
+                sections.forEach(section => {
+                    if (category === 'all' || section.dataset.category === category) {
+                        section.classList.remove('hidden');
+                        section.classList.add('fade-in'); // Add animation
+                    } else {
+                        section.classList.add('hidden');
+                        section.classList.remove('fade-in');
+                    }
+                });
+            }
+
+            // Search Logic
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                
+                if (term.length > 0) {
+                    // Switch to 'all' view implicitly when searching
+                    filterCategory('all'); 
+                    
+                    toolCards.forEach(card => {
+                        const title = card.querySelector('h3').innerText.toLowerCase();
+                        const desc = card.querySelector('p').innerText.toLowerCase();
+                        
+                        if (title.includes(term) || desc.includes(term)) {
+                            card.parentElement.style.display = 'block'; // Ensure parent grid item is visible
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+
+                    // Hide empty sections
+                    sections.forEach(section => {
+                        const visibleCards = Array.from(section.querySelectorAll('.tool-card')).filter(c => c.style.display !== 'none');
+                        if (visibleCards.length === 0) {
+                            section.style.display = 'none';
+                        } else {
+                            section.style.display = 'block';
+                        }
+                    });
+
+                } else {
+                    // Reset
+                    toolCards.forEach(card => card.style.display = 'flex');
+                    sections.forEach(section => section.style.display = 'block');
+                }
+            });
+
+            // Focus search with '/'
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+            });
+
+            // Click Handlers for Sidebar
+            categoryLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const category = link.dataset.category;
+                    filterCategory(category);
+                    
+                    // Smooth scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+
+            // Mobile Custom Dropdown Logic
+            const mobileBtn = document.getElementById('mobile-category-btn');
+            const mobileMenu = document.getElementById('mobile-category-menu');
+            const mobileArrow = document.getElementById('mobile-category-arrow');
+            const mobileLabel = document.getElementById('mobile-category-label');
+            const mobileOptions = document.querySelectorAll('.mobile-option');
+
+            function toggleMobileMenu() {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                if (isHidden) {
+                    mobileMenu.classList.remove('hidden');
+                    // Small delay to allow transition to work
+                    setTimeout(() => {
+                        mobileMenu.classList.remove('opacity-0', 'scale-95');
+                        mobileArrow.classList.add('rotate-180');
+                    }, 10);
+                } else {
+                    mobileMenu.classList.add('opacity-0', 'scale-95');
+                    mobileArrow.classList.remove('rotate-180');
+                    setTimeout(() => {
+                        mobileMenu.classList.add('hidden');
+                    }, 200);
+                }
+            }
+
+            mobileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleMobileMenu();
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!mobileBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        toggleMobileMenu();
+                    }
+                }
+            });
+
+            // Option Selection
+            mobileOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const value = option.dataset.value;
+                    const html = option.innerHTML;
+                    
+                    // Update Label
+                    mobileLabel.innerHTML = html;
+                    
+                    // Filter
+                    filterCategory(value);
+                    
+                    // Close Menu
+                    toggleMobileMenu();
+                });
+            });
+        });
+    </script>
 </body>
 </html>
