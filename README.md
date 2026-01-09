@@ -2,11 +2,11 @@
   <strong>简体中文</strong> | <a href="./README_EN.md">English</a>
 </p>
 
-# OpenHub.icu - 在 ICU 中 Open
+# OpenHub.icu - open and icu
 
 [OpenHub.icu](https://openhub.icu) 提供简洁、高效、无需后端的纯前端体验。
 
-## 🛠️ 工具列表
+## 工具列表
 
 目前包含以下实用工具：
 
@@ -17,11 +17,32 @@
 - **图片压缩**: 纯前端图片压缩，保护隐私。
 - **编码转换**: Base64、URL 编码/解码等。
 
-## 🚀 技术栈
+## 技术栈
 
 - **核心**: 原生 HTML5, JavaScript (ES6+)
 - **样式**: [Tailwind CSS](https://tailwindcss.com/) (CDN)
 - **部署**: [Vercel](https://vercel.com/)
+
+## 本地开发
+
+本项目是一个纯静态网站，无需复杂的构建过程。
+
+1. 克隆项目：
+   ```bash
+   git clone <repository-url>
+   cd openhub.icu
+   ```
+
+2. 运行：
+   - 直接在浏览器中打开 `index.html`。
+   - 或者使用任意静态服务器，例如：
+     ```bash
+     # 使用 Python
+     python3 -m http.server
+
+     # 使用 Node.js serve
+     npx serve .
+     ```
 
 ## 📝 License
 
