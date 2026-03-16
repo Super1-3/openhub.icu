@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票平均成本计算器_补仓做T摊薄成本_股票保本价计算 - OpenHub工具箱</title>
+    <meta name="keywords" content="股票计算器,股票成本计算器,补仓计算器,做T计算器,股票平均价,持仓成本,股票保本价,A股交易费用,盈亏比例">
+    <meta name="description" content="免费在线股票平均成本计算器，支持A股/港美股补仓成本计算、做T成本摊薄计算。实时计算加仓后的持仓均价，精准估算卖出后的保本价格与盈亏比例，助您科学交易。">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .input-group:focus-within label { color: #4f46e5; }
+        .input-group:focus-within input { border-color: #4f46e5; ring: 2px; ring-color: #e0e7ff; }
+        
+        .result-card {
+            transition: all 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10b981;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10b981;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="../../index.html" class="flex items-center gap-2 group hover:opacity-80 transition-opacity">
+                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md group-hover:shadow-lg transition-shadow text-sm">
+                        O
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-slate-900">OpenHub<span class="text-indigo-600">.icu</span></span>
+                </a>
+                <span class="text-slate-300 mx-1">/</span>
+                <span class="text-slate-600 font-medium">股票计算器</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Input Form -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Current Position Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100">
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-800">当前持仓</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="input-group">
+                            <label class="block text-sm font-medium text-slate-600 mb-1">持仓单价 (元)</label>
+                            <div class="relative">
+                                <input type="number" id="currentPrice" step="0.01" min="0" placeholder="0.00" 
+                                    class="block w-full pl-3 pr-10 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-slate-900 font-mono"
+                                    oninput="calculate()">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">¥</div>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="block text-sm font-medium text-slate-600 mb-1">持仓数量 (股)</label>
+                            <div class="relative">
+                                <input type="number" id="currentAmount" step="100" min="0" placeholder="0" 
+                                    class="block w-full pl-3 pr-10 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-slate-900 font-mono"
+                                    oninput="calculate()">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">股</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Operation Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500" id="opBorder"></div>
+                    
+                    <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg" id="opIconBg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="opIcon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </div>
+                            <h2 class="text-lg font-bold text-slate-800">交易操作</h2>
+                        </div>
+                        
+                        <!-- Toggle Switch -->
+                        <div class="flex bg-slate-100 p-1 rounded-lg">
+                            <button onclick="setMode('buy')" id="btnBuy" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-indigo-600">买入/补仓</button>
+                            <button onclick="setMode('sell')" id="btnSell" class="px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all">卖出/做T</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="input-group">
+                            <label class="block text-sm font-medium text-slate-600 mb-1" id="tradePriceLabel">买入单价 (元)</label>
+                            <div class="relative">
+                                <input type="number" id="tradePrice" step="0.01" min="0" placeholder="0.00" 
+                                    class="block w-full pl-3 pr-10 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-slate-900 font-mono"
+                                    oninput="calculate()">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">¥</div>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="block text-sm font-medium text-slate-600 mb-1" id="tradeAmountLabel">买入数量 (股)</label>
+                            <div class="relative">
+                                <input type="number" id="tradeAmount" step="100" min="0" placeholder="0" 
+                                    class="block w-full pl-3 pr-10 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-slate-900 font-mono"
+                                    oninput="calculate()">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">股</div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Options Toggle -->
+                        <div class="pt-2">
+                            <button onclick="toggleAdvanced()" class="text-xs text-slate-500 flex items-center gap-1 hover:text-indigo-600 transition-colors">
+                                <svg class="w-3 h-3 transition-transform" id="advArrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                高级设置 (手续费)
+                            </button>
+                            <div id="advancedOptions" class="hidden mt-3 pl-2 border-l-2 border-slate-100 space-y-3">
+                                <div class="input-group">
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">佣金费率 (%)</label>
+                                    <input type="number" id="commissionRate" step="0.01" min="0" value="0.025" 
+                                        class="block w-24 px-2 py-1 text-sm border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 bg-slate-50"
+                                        oninput="calculate()">
+                                    <p class="text-[10px] text-slate-400 mt-1">默认万分之2.5</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="resetForm()" class="flex-1 py-3 px-4 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-800 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        重置
+                    </button>
+                    <!-- Mobile Calculate Button (visible only on small screens if needed, but we do auto-calc) -->
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Main Result Card -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden result-card">
+                    <!-- Background decoration -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    
+                    <h3 class="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">交易后平均持仓成本</h3>
+                    <div class="flex items-baseline gap-2 mb-6">
+                        <span class="text-5xl font-bold tracking-tight" id="resultAvgPrice">0.00</span>
+                        <span class="text-xl text-slate-400">元/股</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-6 border-t border-white/10">
+                        <div>
+                            <p class="text-slate-400 text-xs mb-1">成本变动</p>
+                            <p class="text-lg font-semibold" id="resultChange">--</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs mb-1">持仓总数</p>
+                            <p class="text-lg font-semibold" id="resultTotalAmount">0</p>
+                        </div>
+                        <div class="col-span-2 sm:col-span-2">
+                            <p class="text-slate-400 text-xs mb-1">最新持仓市值/成本</p>
+                            <p class="text-lg font-semibold text-indigo-300" id="resultTotalCost">0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Analysis Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- Transaction Detail -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 result-card">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <h4 class="font-bold text-slate-800">本次交易详情</h4>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500">交易金额</span>
+                                <span class="font-mono font-medium text-slate-900" id="detailTradeAmount">0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500">预估手续费</span>
+                                <span class="font-mono font-medium text-slate-900" id="detailFee">0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                                <span class="text-slate-500 font-medium">实际发生金额</span>
+                                <span class="font-mono font-bold text-indigo-600" id="detailTotalTrade">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profit/Loss Analysis (Only for Sell or generally useful) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 result-card">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            </div>
+                            <h4 class="font-bold text-slate-800">持仓分析</h4>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500">原持仓成本</span>
+                                <span class="font-mono font-medium text-slate-900" id="detailOldCost">0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center" id="rowProfit">
+                                <span class="text-slate-500">交易盈亏(估算)</span>
+                                <span class="font-mono font-medium text-slate-900" id="detailProfit">--</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                                <span class="text-slate-500 font-medium">盈亏平衡点</span>
+                                <span class="font-mono font-bold text-slate-900" id="detailBreakEven">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="bg-slate-100 rounded-xl p-4 text-xs text-slate-500 leading-relaxed">
+                    <p class="font-bold mb-1 text-slate-600">说明：</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>计算结果仅供参考，实际成本可能因券商佣金最低收费（如5元）或印花税等差异略有不同。</li>
+                        <li>买入模式：计算补仓后的加权平均成本。</li>
+                        <li>卖出模式：计算卖出部分股票后，剩余持仓的摊薄成本（如果盈利卖出则成本降低，亏损卖出则成本升高）。</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let mode = 'buy'; // 'buy' or 'sell'
+        let isAdvancedOpen = false;
+
+        function setMode(newMode) {
+            mode = newMode;
+            
+            // UI Updates
+            const btnBuy = document.getElementById('btnBuy');
+            const btnSell = document.getElementById('btnSell');
+            const opBorder = document.getElementById('opBorder');
+            const opIconBg = document.getElementById('opIconBg');
+            const opIcon = document.getElementById('opIcon');
+            const tradePriceLabel = document.getElementById('tradePriceLabel');
+            const tradeAmountLabel = document.getElementById('tradeAmountLabel');
+
+            if (mode === 'buy') {
+                btnBuy.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-indigo-600";
+                btnSell.className = "px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all";
+                opBorder.className = "absolute top-0 left-0 w-1 h-full bg-indigo-500 transition-colors";
+                opIconBg.className = "p-2 bg-indigo-50 text-indigo-600 rounded-lg transition-colors";
+                opIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>'; // Plus
+                tradePriceLabel.textContent = "买入单价 (元)";
+                tradeAmountLabel.textContent = "买入数量 (股)";
+            } else {
+                btnBuy.className = "px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all";
+                btnSell.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-rose-600";
+                opBorder.className = "absolute top-0 left-0 w-1 h-full bg-rose-500 transition-colors";
+                opIconBg.className = "p-2 bg-rose-50 text-rose-600 rounded-lg transition-colors";
+                opIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>'; // Minus
+                tradePriceLabel.textContent = "卖出单价 (元)";
+                tradeAmountLabel.textContent = "卖出数量 (股)";
+            }
+
+            calculate();
+        }
+
+        function toggleAdvanced() {
+            isAdvancedOpen = !isAdvancedOpen;
+            const el = document.getElementById('advancedOptions');
+            const arrow = document.getElementById('advArrow');
+            if (isAdvancedOpen) {
+                el.classList.remove('hidden');
+                arrow.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                arrow.classList.remove('rotate-180');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('currentPrice').value = '';
+            document.getElementById('currentAmount').value = '';
+            document.getElementById('tradePrice').value = '';
+            document.getElementById('tradeAmount').value = '';
+            calculate();
+        }
+
+        function formatMoney(num) {
+            return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function calculate() {
+            // Get values
+            const currentPrice = parseFloat(document.getElementById('currentPrice').value) || 0;
+            const currentAmount = parseFloat(document.getElementById('currentAmount').value) || 0;
+            const tradePrice = parseFloat(document.getElementById('tradePrice').value) || 0;
+            const tradeAmount = parseFloat(document.getElementById('tradeAmount').value) || 0;
+            const commissionRate = (parseFloat(document.getElementById('commissionRate').value) || 0) / 100;
+
+            // Basic Calcs
+            const currentCost = currentPrice * currentAmount;
+            const tradeValue = tradePrice * tradeAmount;
+            
+            // Fee Calculation (Simplified: usually min 5 RMB, buy: commission, sell: commission + stamp tax 0.05%)
+            // For simplicity in MVP, we use flat commission rate. For Sell, we add 0.05% stamp tax (CN market)
+            let fee = tradeValue * commissionRate;
+            if (mode === 'sell') {
+                fee += tradeValue * 0.0005; // Stamp tax for sell
+            }
+            // Min fee check (usually 5 RMB for commission part, but let's keep it pure math for now or maybe ignore min fee to avoid confusion for small inputs)
+            
+            // Logic
+            let finalAmount = 0;
+            let finalCost = 0;
+            let finalAvg = 0;
+            let changePercent = 0;
+            let profit = 0;
+            let actualTradeCost = 0;
+
+            if (mode === 'buy') {
+                actualTradeCost = tradeValue + fee;
+                finalAmount = currentAmount + tradeAmount;
+                finalCost = currentCost + actualTradeCost;
+                
+                if (finalAmount > 0) {
+                    finalAvg = finalCost / finalAmount;
+                }
+
+            } else { // Sell
+                actualTradeCost = tradeValue - fee; // Money back
+                finalAmount = currentAmount - tradeAmount;
+                
+                if (finalAmount < 0) finalAmount = 0; // Cannot sell more than have
+
+                // Profit Calculation
+                // Cost of sold shares = tradeAmount * currentPrice
+                // Net Revenue = tradeValue - fee
+                // Profit = Net Revenue - Cost of sold shares
+                const costOfSold = tradeAmount * currentPrice;
+                profit = actualTradeCost - costOfSold;
+
+                // Remaining Cost = Old Total Cost - Cost of Sold Shares - Profit (Realized PnL adjusts the cost basis?)
+                // Actually, standard way:
+                // New Total Cost = Old Total Cost - Net Revenue
+                // If Net Revenue > Old Total Cost (Profit taken out), Cost could be negative (Zero Cost).
+                
+                finalCost = currentCost - actualTradeCost;
+                
+                if (finalAmount > 0) {
+                    finalAvg = finalCost / finalAmount;
+                } else {
+                    finalAvg = 0; // Sold all
+                }
+            }
+
+            // Update UI
+            document.getElementById('resultAvgPrice').textContent = formatMoney(finalAvg);
+            document.getElementById('resultTotalAmount').textContent = finalAmount.toLocaleString();
+            document.getElementById('resultTotalCost').textContent = formatMoney(finalCost);
+            
+            // Change %
+            if (currentPrice > 0) {
+                const diff = finalAvg - currentPrice;
+                const pct = (diff / currentPrice) * 100;
+                const sign = diff > 0 ? '+' : '';
+                const colorClass = diff > 0 ? 'text-rose-500' : (diff < 0 ? 'text-emerald-500' : 'text-slate-600');
+                // Note: Stock color: Red is up (cost up is bad usually, but here just indicating direction). 
+                // Usually Cost Down (Green) is Good. Cost Up (Red) is Bad.
+                // Let's use neutral or semantic.
+                // Cost lower = Green (Good), Cost higher = Red (Bad).
+                document.getElementById('resultChange').innerHTML = `<span class="${colorClass}">${sign}${pct.toFixed(2)}%</span> <span class="text-xs text-slate-400">(${formatMoney(diff)})</span>`;
+            } else {
+                document.getElementById('resultChange').textContent = '--';
+            }
+
+            // Details
+            document.getElementById('detailTradeAmount').textContent = formatMoney(tradeValue);
+            document.getElementById('detailFee').textContent = formatMoney(fee);
+            document.getElementById('detailTotalTrade').textContent = formatMoney(actualTradeCost);
+            document.getElementById('detailOldCost').textContent = formatMoney(currentCost);
+            
+            // Break Even (Roughly finalAvg, but maybe with selling fees considered? Keep it simple: Final Avg is the break even price for remaining)
+            // Actually, break even point usually means the price to sell to cover costs.
+            // If buying, break even = finalAvg * (1 + sell_fee_rate).
+            // Let's just show finalAvg as cost basis.
+            document.getElementById('detailBreakEven').textContent = formatMoney(finalAvg * 1.001); // Rough estimate +0.1% for sell fees
+
+            // Profit (Only relevant for sell, or showing paper loss/gain?)
+            const profitEl = document.getElementById('detailProfit');
+            if (mode === 'sell') {
+                const pClass = profit >= 0 ? 'text-rose-500' : 'text-emerald-500'; // Red for profit (CN style)
+                const pSign = profit > 0 ? '+' : '';
+                profitEl.innerHTML = `<span class="${pClass}">${pSign}${formatMoney(profit)}</span>`;
+                document.getElementById('rowProfit').classList.remove('opacity-50');
+            } else {
+                profitEl.textContent = '--';
+                document.getElementById('rowProfit').classList.add('opacity-50');
+            }
+        }
+
+        // Init
+        calculate();
+    </script>
+</body>
+</html>
