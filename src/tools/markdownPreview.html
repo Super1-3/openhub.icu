@@ -22,6 +22,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
 
+<!-- Storage Compression -->
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
 <!-- Export -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -513,7 +516,7 @@ body.fullscreen-mode #preview {
         </button>
         
         <div class="dropdown-group">
-            <button onclick="toggleDropdownMenu(this)" id="btn-pdf" title="导出 PDF">
+            <button onclick="toggleDropdownMenu(this, event)" id="btn-pdf" title="导出 PDF">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               <span>导出 PDF</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 4px; opacity: 0.6;"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -588,6 +591,21 @@ docker build -t markdown-preview .
 <script> 
     const textarea = document.getElementById("md");
     const preview = document.getElementById("preview");
+    const STORAGE_KEY = "openhub_md_preview_content";
+
+    // 尝试从本地存储加载内容并解压
+    try {
+        const savedCompressedContent = localStorage.getItem(STORAGE_KEY);
+        if (savedCompressedContent) {
+            // 使用适合 localStorage 的 UTF-16 解压格式
+            const decompressedContent = LZString.decompressFromUTF16(savedCompressedContent);
+            if (decompressedContent !== null) {
+                textarea.value = decompressedContent;
+            }
+        }
+    } catch (e) {
+        console.error("加载本地存储内容失败:", e);
+    }
 
     function render() {
       // Parse markdown
@@ -599,7 +617,26 @@ docker build -t markdown-preview .
       });
     }
 
-    textarea.addEventListener("input", render);
+    // 防抖保存函数，避免输入过快导致频繁压缩和写入
+    let saveTimeout;
+    function saveContent() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            try {
+                // 使用适合 localStorage 的 UTF-16 压缩格式
+                const compressed = LZString.compressToUTF16(textarea.value);
+                localStorage.setItem(STORAGE_KEY, compressed);
+            } catch (e) {
+                console.error("保存内容到本地存储失败:", e);
+            }
+        }, 1000); // 1000ms 防抖延迟
+    }
+
+    textarea.addEventListener("input", () => {
+        render();
+        saveContent();
+    });
+    
     render();
 
     /* Copy HTML */
@@ -654,8 +691,42 @@ docker build -t markdown-preview .
     } 
     
     /* Dropdown Logic */
-    function toggleDropdownMenu(btn) {
-        const menu = btn.nextElementSibling;
+    function toggleDropdownMenu(btn, event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        
+        let menu;
+        
+        // Try to find menu via stored ID
+        if (btn.dataset.menuId) {
+            menu = document.getElementById(btn.dataset.menuId);
+        }
+        
+        // If not found (or first run), find it in DOM and move to body
+        if (!menu) {
+            // Use closest to find the container, then querySelector for menu
+            const group = btn.closest('.dropdown-group');
+            if (group) {
+                menu = group.querySelector('.dropdown-menu');
+            }
+            
+            // Fallback
+            if (!menu) {
+                 menu = btn.nextElementSibling;
+            }
+
+            // Move to body to avoid overflow/z-index issues on mobile
+            if (menu && menu.classList.contains('dropdown-menu')) {
+                if (!menu.id) menu.id = 'dropdown-' + Date.now();
+                btn.dataset.menuId = menu.id;
+                document.body.appendChild(menu);
+            }
+        }
+
+        if (!menu) return;
+
         const isVisible = menu.style.display === 'block';
         
         // Hide all other dropdowns
@@ -663,27 +734,47 @@ docker build -t markdown-preview .
         
         if (!isVisible) {
             menu.style.display = 'block';
+            menu.style.position = 'fixed'; // Ensure fixed positioning
+            menu.style.zIndex = '999999'; // Force very high z-index
             
             // Calculate position
-            const rect = btn.parentElement.getBoundingClientRect();
-            menu.style.top = (rect.bottom + 4) + 'px';
-            menu.style.left = (rect.right - 160) + 'px'; // Align right, assuming width 160px
-            // Better alignment:
-            menu.style.left = 'auto';
-            menu.style.right = (window.innerWidth - rect.right) + 'px';
+            const rect = btn.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 6) + 'px';
             
+            const menuWidth = 160; 
+            
+            // Try to align left edge of menu with left edge of button
+            let leftPos = rect.left;
+            
+            // If aligning left makes it overflow the right edge of the screen
+            if (leftPos + menuWidth > window.innerWidth - 10) {
+                // Align right edge of menu with right edge of button instead
+                leftPos = rect.right - menuWidth;
+            }
+            
+            // If it STILL overflows the left edge of the screen (very narrow screen)
+            if (leftPos < 10) {
+                leftPos = 10;
+            }
+            
+            menu.style.left = leftPos + 'px';
+            menu.style.right = 'auto';
+
             // Click outside to close
             const closeMenu = (e) => {
-                if (!btn.parentElement.contains(e.target)) {
+                // Check if click is on button or menu
+                if (!btn.contains(e.target) && !menu.contains(e.target)) {
                     menu.style.display = 'none';
                     document.removeEventListener('click', closeMenu);
-                    window.removeEventListener('resize', closeMenu); // Also close on resize
+                    window.removeEventListener('resize', closeMenu); 
                 }
             };
-            setTimeout(() => {
+            
+            // Use requestAnimationFrame or setTimeout to avoid immediate trigger
+            requestAnimationFrame(() => {
                 document.addEventListener('click', closeMenu);
                 window.addEventListener('resize', closeMenu);
-            }, 0);
+            });
         }
     }
 
