@@ -221,6 +221,16 @@ textarea {
   border: 1px solid var(--border);
   padding: 6px 10px;
 }
+
+#preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: block; /* 防止内联底边距 */
+}
+
 /* ===== 列表排版（核心） ===== */
 
 #preview ul,
@@ -322,7 +332,7 @@ body.fullscreen-mode #preview {
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between; /* 改变对齐方式，支持左右两边 */
   gap: 8px;
   padding: 8px 16px;
   overflow-x: auto;
@@ -509,6 +519,17 @@ body.fullscreen-mode #preview {
 </header>
 
 <div class="toolbar">
+    <div class="toolbar-left" style="display: flex; align-items: center; gap: 8px;">
+        <div class="toolbar-group">
+            <button onclick="document.getElementById('file-upload').click()" title="打开本地 Markdown 文件">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>打开文件</span>
+            </button>
+            <input type="file" id="file-upload" accept=".md,.markdown,.txt" style="display: none;" onchange="handleFileUpload(event)">
+        </div>
+    </div>
+
+    <div class="toolbar-right" style="display: flex; align-items: center; gap: 8px;">
       <div class="toolbar-group">
         <button onclick="exportImage(this)" id="btn-img">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -552,6 +573,7 @@ body.fullscreen-mode #preview {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
           <span>全屏</span>
         </button>
+    </div>
     </div>
 </div>
 
@@ -627,6 +649,43 @@ docker build -t markdown-preview .
         console.error("加载内容失败:", e);
     }
 
+    // ===== IndexedDB 图片存储 =====
+    const initDB = () => {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('OpenHubMD_DB', 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('images')) {
+                    db.createObjectStore('images');
+                }
+            };
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    };
+
+    const saveLocalImage = async (id, dataUrl) => {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('images', 'readwrite');
+            const store = tx.objectStore('images');
+            const request = store.put(dataUrl, id);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    };
+
+    const getLocalImage = async (id) => {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('images', 'readonly');
+            const store = tx.objectStore('images');
+            const request = store.get(id);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    };
+
     function render() {
       // Parse markdown
       preview.innerHTML = marked.parse(textarea.value);
@@ -634,6 +693,25 @@ docker build -t markdown-preview .
       // Highlight code blocks
       preview.querySelectorAll("pre code").forEach(block => {
         hljs.highlightElement(block);
+      });
+
+      // 异步加载本地存储的图片
+      preview.querySelectorAll('img[src^="local://"]').forEach(async (img) => {
+          const id = img.getAttribute('src').replace('local://', '');
+          try {
+              const base64 = await getLocalImage(id);
+              if (base64) {
+                  img.src = base64;
+              } else {
+                  // 如果找不到图片（可能是分享链接或缓存被清）
+                  img.alt = '⚠️ 图片已丢失 (本地缓存已被清理或这是他人分享的链接)';
+                  img.style.border = '1px dashed #ef4444';
+                  img.style.padding = '20px';
+                  img.style.color = '#ef4444';
+              }
+          } catch (err) {
+              console.error('加载图片失败:', err);
+          }
       });
     }
 
@@ -656,8 +734,107 @@ docker build -t markdown-preview .
         render();
         saveContent();
     });
+
+    // 支持剪贴板粘贴图片直接插入 Base64 格式
+    textarea.addEventListener("paste", async (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        
+        for (const item of items) {
+            if (item.type.indexOf("image") !== -1) {
+                e.preventDefault(); // 阻止默认的粘贴行为
+                const file = item.getAsFile();
+                if (!file) continue;
+                
+                // 添加占位符，提示用户图片正在处理
+                const startPos = textarea.selectionStart;
+                const endPos = textarea.selectionEnd;
+                const placeholder = `\n![正在处理图片...]()\n`;
+                textarea.value = textarea.value.substring(0, startPos) + placeholder + textarea.value.substring(endPos);
+                textarea.selectionStart = textarea.selectionEnd = startPos + placeholder.length;
+                render();
+                
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const base64 = event.target.result;
+                    const imgId = 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                    
+                    try {
+                        // 保存到 IndexedDB
+                        await saveLocalImage(imgId, base64);
+                        
+                        // 插入简短的引用 ID
+                        const imgMd = `\n![图片](local://${imgId})\n`;
+                        
+                        // 替换刚才的 placeholder
+                        textarea.value = textarea.value.replace(placeholder, imgMd);
+                        
+                        // 更新光标位置
+                        const newPos = startPos + imgMd.length;
+                        textarea.selectionStart = textarea.selectionEnd = newPos;
+                        
+                        render();
+                        saveContent();
+                    } catch (err) {
+                        console.error('保存图片失败:', err);
+                        alert('保存图片失败，可能是浏览器存储空间不足。');
+                        textarea.value = textarea.value.replace(placeholder, '');
+                        render();
+                    }
+                };
+                reader.readAsDataURL(file);
+                break; // 每次粘贴只处理一张图片
+            }
+        }
+    });
     
     render();
+
+    /* Handle File Upload */
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            let content = e.target.result;
+            let hasLocalPaths = false;
+
+            // 检测并转换本地图片绝对路径
+            // 匹配 Windows 路径 (C:\... 或 D:\...) 和 macOS/Linux 绝对路径 (/Users/... 或 /home/... 等)
+            // 不转换 http/https/data/local 协议开头的路径，也不转换相对路径
+            const localImgRegex = /!\[([^\]]*)\]\((?!http|https|data:|local:\/\/)(?:([a-zA-Z]:[\\\/].*?)|(\/(?:Users|home|var|tmp|etc|usr|opt|root)\/.*?))\)/g;
+
+            content = content.replace(localImgRegex, (match, alt, winPath, macPath) => {
+                hasLocalPaths = true;
+                let path = winPath || macPath;
+                let fileUrl = path;
+                
+                // 如果是 Windows 路径，把 \ 替换为 /
+                if (winPath) {
+                    fileUrl = 'file:///' + path.replace(/\\/g, '/');
+                } else if (macPath) {
+                    fileUrl = 'file://' + path;
+                }
+                return `![${alt}](${fileUrl})`;
+            });
+
+            textarea.value = content;
+            render();
+            saveContent();
+
+            // 如果是在线网页打开，并且包含本地绝对路径，给出提示
+            if (hasLocalPaths && window.location.protocol !== 'file:') {
+                setTimeout(() => {
+                    alert('⚠️ 温馨提示：\n\n检测到您的文档中包含本地图片的绝对路径。\n\n由于浏览器的安全限制，在线网页无法直接读取您电脑上的本地文件。如果您发现图片显示为“损坏”或“加载失败”，请直接在编辑器中【复制粘贴】该图片来替换它们！');
+                }, 100);
+            }
+        };
+        reader.readAsText(file);
+        
+        // 清空 input，允许重复选择同一个文件
+        event.target.value = '';
+    }
 
     /* Fallback copy method for non-HTTPS environments */
     function fallbackCopyTextToClipboard(text) {
@@ -732,6 +909,10 @@ docker build -t markdown-preview .
         const originalText = btn.querySelector("span").innerText;
         const originalIcon = btn.querySelector("svg").innerHTML;
         
+        if (textarea.value.includes('local://')) {
+            alert('⚠️ 温馨提示：\n\n您的文档中包含了本地粘贴的图片。\n由于纯前端工具的限制，分享链接【无法】包含这些图片数据。\n\n对方打开链接时，这些图片将显示为“已丢失”。如果您需要包含图片，建议导出为图片或 PDF 进行分享！');
+        }
+
         try {
             // 使用适合 URL 的格式压缩
             const compressed = LZString.compressToEncodedURIComponent(textarea.value);
